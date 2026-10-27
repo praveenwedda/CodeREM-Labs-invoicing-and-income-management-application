@@ -1,0 +1,16 @@
+<%- include('../partials/head') %>
+<div class="head"><h1>Clients</h1><a class="btn" href="/clients/new">New client</a></div>
+<form class="toolbar" method="get"><input type="text" name="q" value="<%= q || '' %>" placeholder="Search name, contact or email"><button class="btn ghost">Search</button></form>
+<div class="card flush"><div class="tbl-wrap"><table>
+  <thead><tr><th>Client</th><th>Contact</th><th>Projects</th><th>Contracts</th><th class="num">Invoiced</th><th class="num">Received</th><th class="num">Balance</th></tr></thead>
+  <tbody>
+  <% if (!clients.length) { %><tr><td colspan="7" class="empty">No clients yet.</td></tr><% } %>
+  <% for (const c of clients) { %><tr>
+    <td><a href="/clients/<%= c.id %>"><b><%= c.name %></b></a><div class="small muted"><%= c.currency %></div></td>
+    <td><%= c.contact_person || '' %><div class="small muted"><%= c.email || '' %></div></td>
+    <td><%= c.project_count %></td><td><%= c.contract_count %></td>
+    <td class="num"><%= fmtAmount(c.invoiced) %></td><td class="num"><%= fmtAmount(c.received) %></td>
+    <td class="num <%= c.invoiced - c.received > 0 ? 'neg' : '' %>"><%= fmtAmount(c.invoiced - c.received) %></td>
+  </tr><% } %>
+  </tbody></table></div></div>
+<%- include('../partials/foot') %>

@@ -1,0 +1,29 @@
+<%- include('../partials/head') %>
+<div class="head"><div><h1>Audit trail</h1><div class="sub"><%= total %> entries. This log is append-only: the database rejects any edit or deletion, and each entry is cryptographically chained to the previous one.</div></div>
+  <div class="actions"><a class="btn ghost" href="/audit?verify=1">Verify integrity</a><a class="btn ghost" href="/audit/export.csv?<%= new URLSearchParams(Object.entries(f).filter(([, v]) => v)).toString() %>">Export CSV</a></div></div>
+<% if (verification) { %>
+  <% if (verification.ok) { %><div class="flash success">Integrity verified: all <%= verification.count %> entries are intact and correctly chained.</div>
+  <% } else { %><div class="flash error"><b>Integrity check FAILED</b> at entry #<%= verification.brokenAt %>. The log has been altered outside the application.</div><% } %>
+<% } %>
+<form class="toolbar" method="get">
+  <input type="text" name="q" value="<%= f.q || '' %>" placeholder="Search entity ID or details">
+  <select name="action"><option value="">All areas</option><% for (const a of actions) { %><option <%= f.action === a ? 'selected' : '' %>><%= a %></option><% } %></select>
+  <select name="user"><option value="">All users</option><% for (const u of users) { %><option <%= f.user === u ? 'selected' : '' %>><%= u %></option><% } %></select>
+  <button class="btn ghost">Filter</button>
+</form>
+<div class="card flush"><div class="tbl-wrap"><table>
+  <thead><tr><th>#</th><th>Time</th><th>User</th><th>Action</th><th>Entity</th><th>Details</th><th>IP</th></tr></thead><tbody>
+  <% for (const a of rows) { %><tr>
+    <td class="small muted"><%= a.id %></td><td class="small" style="white-space:nowrap"><%= fmtDateTime(a.ts) %></td><td class="small"><%= a.user_label %></td>
+    <td class="mono"><%= a.action %></td><td class="small"><%= a.entity || '' %> <%= a.entity_id || '' %></td>
+    <td class="mono" style="max-width:420px;word-break:break-word"><%= a.details || '' %></td><td class="small muted"><%= a.ip || '' %></td>
+  </tr><% } %>
+  </tbody></table></div>
+  <% if (pages > 1) { const qs = (p) => new URLSearchParams({ ...Object.fromEntries(Object.entries(f).filter(([, v]) => v)), page: p }).toString(); %>
+  <div class="pager">
+    <% if (page > 1) { %><a class="btn ghost sm" href="?<%= qs(page - 1) %>">← Newer</a><% } %>
+    <span class="small muted">Page <%= page %> of <%= pages %></span>
+    <% if (page < pages) { %><a class="btn ghost sm" href="?<%= qs(page + 1) %>">Older →</a><% } %>
+  </div><% } %>
+</div>
+<%- include('../partials/foot') %>

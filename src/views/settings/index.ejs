@@ -1,0 +1,29 @@
+<%- include('../partials/head') %>
+<div class="head"><div><h1>Company settings</h1><div class="sub">Printed on new invoices. Invoices already issued keep the details they were issued with.</div></div></div>
+<form class="card" method="post" action="/settings" style="max-width:820px">
+  <%- include('../partials/csrf') %>
+  <h2>Company</h2>
+  <div class="row">
+    <div class="field"><label>Company name</label><input type="text" name="company_name" value="<%= s.company_name %>" required></div>
+    <div class="field"><label>Business registration no.</label><input type="text" name="company_reg" value="<%= s.company_reg %>"></div>
+  </div>
+  <div class="field"><label>Tagline</label><input type="text" name="company_tagline" value="<%= s.company_tagline %>"></div>
+  <div class="field"><label>Address</label><textarea name="company_address"><%= s.company_address %></textarea></div>
+  <div class="row">
+    <div class="field"><label>Phone</label><input type="text" name="company_phone" value="<%= s.company_phone %>"></div>
+    <div class="field"><label>Email</label><input type="text" name="company_email" value="<%= s.company_email %>"></div>
+    <div class="field"><label>Website</label><input type="text" name="company_website" value="<%= s.company_website %>"></div>
+  </div>
+  <h2 style="margin-top:10px">Invoicing</h2>
+  <div class="field"><label>Payment / bank details</label><textarea name="bank_details" placeholder="Bank: …&#10;Account name: CodeREM Labs Pvt. Ltd.&#10;Account no: …&#10;Branch / SWIFT: …"><%= s.bank_details %></textarea>
+    <div class="hint">Printed under “Payment details” on every invoice.</div></div>
+  <div class="row">
+    <div class="field"><label>Invoice number prefix</label><input type="text" name="invoice_prefix" value="<%= s.invoice_prefix %>" pattern="[A-Z0-9]{2,10}" required>
+      <div class="hint">UIDs look like <span class="mono"><%= s.invoice_prefix %>-<%= today.slice(0, 4) %>-00001</span></div></div>
+    <div class="field"><label>Default currency</label><select name="default_currency"><% for (const c of CURRENCIES) { %><option <%= c === s.default_currency ? 'selected' : '' %>><%= c %></option><% } %></select></div>
+    <div class="field"><label>Default payment terms (days)</label><input type="number" name="default_payment_terms" min="0" max="365" value="<%= s.default_payment_terms %>"></div>
+  </div>
+  <div class="field"><label>Invoice footer message</label><input type="text" name="invoice_footer" value="<%= s.invoice_footer %>"></div>
+  <button class="btn">Save settings</button>
+</form>
+<%- include('../partials/foot') %>

@@ -1,0 +1,51 @@
+<%- include('../partials/head') %>
+<div class="head"><div><div class="crumbs"><a href="/invoices">Invoices</a></div><h1>New invoice</h1></div></div>
+<div class="card" style="max-width:980px">
+  <div class="field" style="max-width:420px"><label>Client</label>
+    <select name="client_id" data-nav><option value="">Select client…</option>
+      <% for (const c of clients) { %><option value="<%= c.id %>" <%= client && c.id === client.id ? 'selected' : '' %>><%= c.name %> (<%= c.currency %>)</option><% } %></select></div>
+</div>
+<% if (client) { %>
+<form method="post" action="/invoices" style="max-width:980px">
+  <%- include('../partials/csrf') %>
+  <input type="hidden" name="client_id" value="<%= client.id %>">
+  <div class="card flush">
+    <h2>Project installments to bill</h2>
+    <p class="muted small" style="margin:-6px 18px 10px">Select one or more unbilled installments, from any of this client's projects.</p>
+    <% const any = projects.some(p => p.installments.length); %>
+    <% if (!any) { %><div class="empty">No unbilled installments for this client.</div><% } else { %>
+    <div class="tbl-wrap"><table><thead><tr><th style="width:36px"></th><th>Project / installment</th><th>Line description on invoice</th><th>Expected</th><th class="num">Amount</th></tr></thead><tbody>
+      <% for (const p of projects) { for (const i of p.installments) { %><tr>
+        <td><input type="checkbox" name="installment_ids" value="<%= i.id %>" data-inst-amount="<%= i.amount %>" <%= preselect.includes(i.id) ? 'checked' : '' %>></td>
+        <td><b><%= p.name %></b><div class="small muted"><%= i.description %></div></td>
+        <td><input type="text" name="inst_desc_<%= i.id %>" value="<%= p.name %> — <%= i.description %>"></td>
+        <td class="small <%= i.due_date && i.due_date < today ? 'neg' : '' %>"><%= fmtDate(i.due_date) || '—' %></td>
+        <td class="num"><%= fmtAmount(i.amount) %></td>
+      </tr><% } } %>
+    </tbody></table></div><% } %>
+  </div>
+  <div class="card flush">
+    <h2>Additional line items</h2>
+    <div class="tbl-wrap"><table class="items-table"><thead><tr><th>Description</th><th style="width:220px">Project (optional)</th><th style="width:160px">Amount</th><th style="width:40px"></th></tr></thead>
+      <tbody id="item-rows"></tbody>
+      <tfoot><tr><td colspan="4"><button class="btn ghost sm" data-add-row="item-tpl" data-target="item-rows">+ Add line item</button></td></tr></tfoot>
+    </table></div>
+    <template id="item-tpl"><tr><td><input type="text" name="item_description" placeholder="e.g. Additional feature: export to Excel"></td>
+      <td><select name="item_project"><option value="">—</option><% for (const p of projects) { %><option value="<%= p.id %>"><%= p.name %></option><% } %></select></td>
+      <td><input type="text" name="item_amount" inputmode="decimal"></td><td><button class="btn link" data-remove-row>✕</button></td></tr></template>
+  </div>
+  <div class="card">
+    <div class="row">
+      <div class="field"><label>Issue date</label><input type="date" name="issue_date" value="<%= defaults.issue_date %>" required></div>
+      <div class="field"><label>Due date</label><input type="date" name="due_date" value="<%= defaults.due_date %>" required></div>
+    </div>
+    <div class="field"><label>Notes printed on invoice</label><textarea name="notes" placeholder="Optional"></textarea></div>
+    <div class="head" style="margin:0">
+      <div style="font-size:18px">Total: <b><%= client.currency %> <span data-total>0.00</span></b></div>
+      <button class="btn red">Issue invoice</button>
+    </div>
+    <p class="small muted" style="margin-bottom:0">Once issued, an invoice gets a permanent UID and cannot be edited — only voided (with a reason) if a mistake was made.</p>
+  </div>
+</form>
+<% } %>
+<%- include('../partials/foot') %>

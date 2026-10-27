@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setup · CodeREM Labs</title><link rel="stylesheet" href="/static/css/app.css"></head>
+<body><div class="auth"><div class="card">
+  <div class="brand"><b><%= company.company_name %></b><i><%= company.company_tagline %></i></div>
+  <h2>Create the first administrator</h2>
+  <p class="muted small">This page is only available until the first account exists. Further administrators are created from inside the system.</p>
+  <% if (error) { %><div class="flash error"><%= error %></div><% } %>
+  <form method="post" action="/setup">
+    <%- include('partials/csrf') %>
+    <div class="field"><label>Full name</label><input type="text" name="name" value="<%= form.name || '' %>" required></div>
+    <div class="field"><label>Email</label><input type="email" name="email" value="<%= form.email || '' %>" required></div>
+    <div class="field"><label>Password</label><input type="password" name="password" minlength="10" required autocomplete="new-password"><div class="hint">At least 10 characters.</div></div>
+    <div class="field"><label>Confirm password</label><input type="password" name="password2" minlength="10" required autocomplete="new-password"></div>
+    <button class="btn" style="width:100%;justify-content:center">Create administrator</button>
+  </form>
+</div></div></body></html>

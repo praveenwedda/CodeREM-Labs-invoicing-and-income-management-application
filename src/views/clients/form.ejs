@@ -1,0 +1,22 @@
+<%- include('../partials/head') %>
+<div class="head"><div><div class="crumbs"><a href="/clients">Clients</a></div><h1><%= title %></h1></div></div>
+<form class="card" method="post" action="/clients<%= client.id ? '/' + client.id : '' %>" style="max-width:760px">
+  <%- include('../partials/csrf') %>
+  <div class="field"><label>Client / company name *</label><input type="text" name="name" value="<%= client.name || '' %>" required></div>
+  <div class="row">
+    <div class="field"><label>Contact person</label><input type="text" name="contact_person" value="<%= client.contact_person || '' %>"></div>
+    <div class="field"><label>Email</label><input type="email" name="email" value="<%= client.email || '' %>"></div>
+    <div class="field"><label>Phone</label><input type="text" name="phone" value="<%= client.phone || '' %>"></div>
+  </div>
+  <div class="field"><label>Billing address</label><textarea name="address"><%= client.address || '' %></textarea></div>
+  <div class="row">
+    <div class="field"><label>Tax / VAT ID</label><input type="text" name="tax_id" value="<%= client.tax_id || '' %>"></div>
+    <div class="field"><label>Billing currency</label>
+      <select name="currency" <%= locals.hasInvoices ? 'disabled' : '' %>><% for (const c of CURRENCIES) { %><option <%= c === client.currency ? 'selected' : '' %>><%= c %></option><% } %></select>
+      <% if (locals.hasInvoices) { %><input type="hidden" name="currency" value="<%= client.currency %>"><div class="hint">Locked — invoices exist in this currency.</div><% } %>
+    </div>
+  </div>
+  <div class="field"><label>Internal notes</label><textarea name="notes"><%= client.notes || '' %></textarea></div>
+  <div class="actions"><button class="btn">Save client</button><a class="btn ghost" href="<%= client.id ? '/clients/' + client.id : '/clients' %>">Cancel</a></div>
+</form>
+<%- include('../partials/foot') %>

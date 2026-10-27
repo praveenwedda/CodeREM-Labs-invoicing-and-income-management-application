@@ -1,0 +1,60 @@
+<%- include('../partials/head') %>
+<div class="head">
+  <div><div class="crumbs"><a href="/clients">Clients</a> / <a href="/clients/<%= project.client_id %>"><%= project.client_name %></a></div>
+    <h1><%= project.name %> <%- include('../partials/status', { s: project.status }) %></h1>
+    <div class="sub"><%= project.start_date ? fmtDate(project.start_date) : 'No start date' %><%= project.end_date ? ' → ' + fmtDate(project.end_date) : '' %></div></div>
+  <div class="actions">
+    <a class="btn ghost" href="/projects/<%= project.id %>/edit">Edit</a>
+    <a class="btn ghost" href="/contracts/new?client_id=<%= project.client_id %>&project_id=<%= project.id %>">Add support contract</a>
+    <a class="btn" href="/invoices/new?client_id=<%= project.client_id %>">Create invoice</a>
+  </div>
+</div>
+<div class="grid g4" style="margin-bottom:18px">
+  <div class="stat"><div class="k">Project total</div><div class="v"><%= fmtMoney(project.total_amount, project.currency) %></div></div>
+  <div class="stat"><div class="k">Invoiced</div><div class="v"><%= fmtAmount(totals.invoiced) %></div><div class="small muted"><%= project.total_amount ? Math.round(totals.invoiced / project.total_amount * 100) : 0 %>% of total</div></div>
+  <div class="stat"><div class="k">Received</div><div class="v"><%= fmtAmount(totals.received) %></div><div class="small muted">Pro rata on shared invoices</div></div>
+  <div class="stat accent"><div class="k">Still to invoice</div><div class="v"><%= fmtAmount(project.total_amount - totals.invoiced) %></div></div>
+</div>
+<% if (project.description) { %><div class="card"><h2>Scope</h2><div style="white-space:pre-line"><%= project.description %></div></div><% } %>
+
+<div class="card flush">
+  <h2>Installment plan</h2>
+  <% if (totals.planned !== project.total_amount && installments.length) { %><div class="flash warning" style="margin:0 18px 12px">Installments total <%= fmtAmount(totals.planned) %>, but the project total is <%= fmtAmount(project.total_amount) %>.</div><% } %>
+  <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Description</th><th>Expected</th><th class="num">Amount</th><th>Billing</th><th></th></tr></thead><tbody>
+    <% if (!installments.length) { %><tr><td colspan="6" class="empty">No installments planned yet.</td></tr><% } %>
+    <% installments.forEach((i, n) => { %><tr>
+      <td><%= n + 1 %></td><td><%= i.description %></td>
+      <td class="<%= !i.billedOn && i.due_date && i.due_date < today ? 'neg' : '' %>"><%= fmtDate(i.due_date) || '—' %></td>
+      <td class="num"><%= fmtAmount(i.amount) %></td>
+      <td><% if (i.billedOn) { %><span class="badge b-paid">Billed</span> <span class="small"><%= i.billedOn.uid %></span><% } else { %>
+        <a class="btn ghost sm" href="/invoices/new?client_id=<%= project.client_id %>&installment=<%= i.id %>">Invoice this</a><% } %></td>
+      <td><% if (!i.billedOn) { %><details class="inline"><summary>Edit</summary>
+        <form method="post" action="/projects/<%= project.id %>/installments/<%= i.id %>"><%- include('../partials/csrf') %>
+          <div class="row"><input type="text" name="description" value="<%= i.description %>"><input type="text" name="amount" value="<%= toInput(i.amount) %>"><input type="date" name="due_date" value="<%= i.due_date || '' %>"></div>
+          <div class="actions" style="margin-top:8px"><button class="btn sm">Save</button></div></form>
+        <form method="post" action="/projects/<%= project.id %>/installments/<%= i.id %>" data-confirm="Remove this installment?"><%- include('../partials/csrf') %>
+          <input type="hidden" name="op" value="delete"><button class="btn link neg small">Remove installment</button></form>
+      </details><% } %></td>
+    </tr><% }) %>
+  </tbody>
+  <tfoot><tr><td></td><td>Total planned</td><td></td><td class="num"><%= fmtAmount(totals.planned) %></td><td colspan="2"></td></tr></tfoot></table></div>
+  <form method="post" action="/projects/<%= project.id %>/installments" style="padding:14px 18px;border-top:1px solid var(--line)">
+    <%- include('../partials/csrf') %>
+    <h3>Add installment</h3>
+    <div class="row" style="grid-template-columns:2fr 1fr 1fr auto;align-items:end">
+      <div class="field" style="margin:0"><label>Description</label><input type="text" name="description" required></div>
+      <div class="field" style="margin:0"><label>Amount</label><input type="text" name="amount" inputmode="decimal" required></div>
+      <div class="field" style="margin:0"><label>Expected date</label><input type="date" name="due_date"></div>
+      <button class="btn">Add</button>
+    </div>
+  </form>
+</div>
+
+<% if (contracts.length) { %><div class="card flush"><h2>Support contracts for this project</h2><table><tbody>
+  <% for (const c of contracts) { %><tr><td><a href="/contracts/<%= c.id %>"><%= c.title %></a></td><td><%- include('../partials/status', { s: c.status }) %></td><td class="num"><%= fmtAmount(c.monthly_amount) %> / month</td></tr><% } %>
+</tbody></table></div><% } %>
+
+<div class="card flush"><h2>Invoices covering this project</h2>
+  <%- include('../invoices/_table', { invoices, showClient: false }) %>
+</div>
+<%- include('../partials/foot') %>

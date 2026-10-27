@@ -1,0 +1,87 @@
+<%- include('../partials/head') %>
+<div class="head">
+  <div><div class="crumbs"><a href="/invoices">Invoices</a> / <a href="/clients/<%= invoice.client_id %>"><%= invoice.client_name %></a></div>
+    <h1><span class="mono" style="font-size:22px"><%= invoice.uid %></span> <%- include('../partials/status', { s: invoice.computed_status }) %></h1>
+    <div class="sub">Issued <%= fmtDate(invoice.issue_date) %> · Due <%= fmtDate(invoice.due_date) %> · by <%= creator %></div></div>
+  <div class="actions">
+    <a class="btn ghost" href="/invoices/<%= invoice.id %>/pdf?inline=1" target="_blank" rel="noopener">View PDF</a>
+    <a class="btn" href="/invoices/<%= invoice.id %>/pdf">Download PDF</a>
+  </div>
+</div>
+<% if (invoice.status === 'void') { %><div class="flash error"><b>Void</b> since <%= fmtDateTime(invoice.voided_at) %> — <%= invoice.void_reason %></div><% } %>
+<div class="grid g3" style="margin-bottom:18px">
+  <div class="stat"><div class="k">Invoice total</div><div class="v"><%= fmtMoney(invoice.total, invoice.currency) %></div></div>
+  <div class="stat"><div class="k">Paid</div><div class="v"><%= fmtAmount(invoice.paid) %></div></div>
+  <div class="stat accent"><div class="k"><%= invoice.balance < 0 ? 'Overpaid (client credit)' : 'Balance due' %></div>
+    <div class="v <%= invoice.balance > 0 ? 'neg' : invoice.balance < 0 ? 'pos' : '' %>"><%= fmtAmount(Math.abs(invoice.balance)) %></div></div>
+</div>
+<div class="grid g2">
+  <div class="card"><h2>Billed to</h2><dl class="kv">
+    <dt>Client</dt><dd><%= client.name %></dd>
+    <% if (client.contact_person) { %><dt>Attention</dt><dd><%= client.contact_person %></dd><% } %>
+    <% if (client.address) { %><dt>Address</dt><dd><%= client.address %></dd><% } %>
+    <% if (client.email) { %><dt>Email</dt><dd><%= client.email %></dd><% } %>
+    <% if (client.phone) { %><dt>Phone</dt><dd><%= client.phone %></dd><% } %>
+  </dl><p class="small muted" style="margin-bottom:0">Details as they were when the invoice was issued.</p></div>
+  <div class="card"><h2>Record</h2><dl class="kv">
+    <dt>Invoice UID</dt><dd class="mono"><%= invoice.uid %></dd>
+    <dt>Fingerprint</dt><dd class="mono" style="word-break:break-all"><%= invoice.content_hash %></dd>
+    <% if (invoice.contract_id) { %><dt>Contract</dt><dd><a href="/contracts/<%= invoice.contract_id %>">View contract</a></dd><% } %>
+    <% if (invoice.notes) { %><dt>Notes</dt><dd><%= invoice.notes %></dd><% } %>
+  </dl><p class="small muted" style="margin-bottom:0">The PDF is regenerated from this record on every download; the fingerprint printed on it matches the one above.</p></div>
+</div>
+<div class="card flush"><h2>Line items</h2><div class="tbl-wrap"><table>
+  <thead><tr><th>#</th><th>Description</th><th>Project</th><th class="num">Amount</th></tr></thead><tbody>
+  <% for (const it of items) { %><tr><td><%= it.position %></td><td><%= it.description %></td>
+    <td><%= it.project_id ? '' : '—' %><% if (it.project_id) { %><a href="/projects/<%= it.project_id %>"><%= it.project_name %></a><% } %></td>
+    <td class="num"><%= fmtAmount(it.amount) %></td></tr><% } %></tbody>
+  <tfoot><tr><td></td><td colspan="2">Total</td><td class="num"><%= fmtMoney(invoice.total, invoice.currency) %></td></tr></tfoot>
+</table></div></div>
+
+<div class="card flush"><h2>Payments</h2>
+  <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Method</th><th>Reference</th><th class="num">Amount</th><th>Recorded by</th><th></th></tr></thead><tbody>
+    <% if (!payments.length) { %><tr><td colspan="6" class="empty">No payments recorded.</td></tr><% } %>
+    <% for (const p of payments) { %><tr>
+      <td><%= fmtDate(p.payment_date) %></td><td><%= p.method %></td>
+      <td><%= p.reference || '' %><% if (p.notes) { %><div class="small muted"><%= p.notes %></div><% } %></td>
+      <td class="num <%= p.amount < 0 ? 'neg' : '' %>"><%= fmtAmount(p.amount) %></td>
+      <td class="small"><%= p.recorded_by_email %><div class="muted"><%= fmtDateTime(p.created_at) %></div></td>
+      <td><% if (p.amount > 0 && !p.reversed_by) { %><details class="inline"><summary class="small">Reverse</summary>
+        <form method="post" action="/payments/<%= p.id %>/reverse"><%- include('../partials/csrf') %>
+          <input type="text" name="reason" placeholder="Reason (e.g. cheque bounced, entered in error)" required>
+          <button class="btn sm red" style="margin-top:6px">Reverse payment</button></form></details>
+      <% } else if (p.reversed_by) { %><span class="badge b-void">Reversed</span><% } %></td>
+    </tr><% } %>
+  </tbody></table></div>
+  <% if (invoice.status === 'issued') { %>
+  <form method="post" action="/invoices/<%= invoice.id %>/payments" style="padding:14px 18px;border-top:1px solid var(--line)">
+    <%- include('../partials/csrf') %>
+    <h3>Record a payment</h3>
+    <div class="row">
+      <div class="field"><label>Amount received (<%= invoice.currency %>)</label><input type="text" name="amount" inputmode="decimal" value="<%= invoice.balance > 0 ? toInput(invoice.balance) : '' %>" required>
+        <div class="hint">Part payments and overpayments are both accepted.</div></div>
+      <div class="field"><label>Date received</label><input type="date" name="payment_date" value="<%= today %>" required></div>
+      <div class="field"><label>Method</label><select name="method"><% for (const m of METHODS) { %><option><%= m %></option><% } %></select></div>
+      <div class="field"><label>Reference</label><input type="text" name="reference" placeholder="Bank ref / cheque no."></div>
+    </div>
+    <div class="field"><label>Notes</label><input type="text" name="notes"></div>
+    <button class="btn">Record payment</button>
+  </form>
+  <% } %>
+</div>
+
+<div class="grid g2">
+  <div class="card flush"><h2>History</h2><table><tbody>
+    <% for (const h of history) { %><tr><td class="small muted" style="width:170px"><%= fmtDateTime(h.ts) %></td><td class="small"><%= h.user_label %></td><td class="mono"><%= h.action %></td></tr><% } %>
+  </tbody></table></div>
+  <% if (invoice.status === 'issued') { %>
+  <div class="card"><h2>Void invoice</h2>
+    <p class="small muted">Voiding keeps the invoice and its UID on record but cancels it. Installments on it become billable again. Payments must be reversed first.</p>
+    <form method="post" action="/invoices/<%= invoice.id %>/void" data-confirm="Void invoice <%= invoice.uid %>? This cannot be undone.">
+      <%- include('../partials/csrf') %>
+      <div class="field"><input type="text" name="reason" placeholder="Reason for voiding" required></div>
+      <button class="btn ghost neg">Void invoice</button>
+    </form>
+  </div><% } %>
+</div>
+<%- include('../partials/foot') %>

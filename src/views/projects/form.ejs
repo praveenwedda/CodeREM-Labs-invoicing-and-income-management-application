@@ -1,0 +1,33 @@
+<%- include('../partials/head') %>
+<% const STAT = { planned: 'Planned', active: 'Active', on_hold: 'On hold', completed: 'Completed', cancelled: 'Cancelled' }; %>
+<div class="head"><div><div class="crumbs"><a href="/clients">Clients</a> / <a href="/clients/<%= client.id %>"><%= client.name %></a></div><h1><%= title %></h1></div></div>
+<form method="post" action="/projects<%= isNew ? '' : '/' + project.id %>" style="max-width:900px">
+  <%- include('../partials/csrf') %>
+  <input type="hidden" name="client_id" value="<%= client.id %>">
+  <div class="card">
+    <h2>Project details</h2>
+    <div class="field"><label>Project name *</label><input type="text" name="name" value="<%= project.name || '' %>" required></div>
+    <div class="field"><label>Description / scope</label><textarea name="description"><%= project.description || '' %></textarea></div>
+    <div class="row">
+      <div class="field"><label>Project total (<%= client.currency %>) *</label><input type="text" name="total_amount" inputmode="decimal" value="<%= toInput(project.total_amount) %>" required></div>
+      <div class="field"><label>Status</label><select name="status"><% for (const [k, v] of Object.entries(STAT)) { %><option value="<%= k %>" <%= project.status === k ? 'selected' : '' %>><%= v %></option><% } %></select></div>
+      <div class="field"><label>Start date</label><input type="date" name="start_date" value="<%= project.start_date || '' %>"></div>
+      <div class="field"><label>Target end date</label><input type="date" name="end_date" value="<%= project.end_date || '' %>"></div>
+    </div>
+  </div>
+  <% if (isNew) { %>
+  <div class="card">
+    <h2>Installment plan</h2>
+    <p class="muted small" style="margin-top:-6px">How you expect the project total to be paid. Each installment can later be billed on an invoice (alone or with others). You can also add or adjust installments later.</p>
+    <table class="items-table"><thead><tr><th>Description</th><th style="width:170px">Amount</th><th style="width:170px">Expected date</th><th style="width:40px"></th></tr></thead>
+      <tbody id="inst-rows">
+        <tr><td><input type="text" name="inst_description" placeholder="e.g. Advance — 40% on signing"></td><td><input type="text" name="inst_amount" inputmode="decimal"></td><td><input type="date" name="inst_due"></td><td></td></tr>
+      </tbody>
+      <tfoot><tr><td><button class="btn ghost sm" data-add-row="inst-tpl" data-target="inst-rows">+ Add installment</button></td><td class="num" data-inst-total>0.00</td><td colspan="2"><span class="small" style="color:var(--warn)" data-inst-warn hidden>Does not match project total</span></td></tr></tfoot>
+    </table>
+    <template id="inst-tpl"><tr><td><input type="text" name="inst_description"></td><td><input type="text" name="inst_amount" inputmode="decimal"></td><td><input type="date" name="inst_due"></td><td><button class="btn link" data-remove-row>✕</button></td></tr></template>
+  </div>
+  <% } %>
+  <div class="actions"><button class="btn"><%= isNew ? 'Create project' : 'Save changes' %></button><a class="btn ghost" href="<%= isNew ? '/clients/' + client.id : '/projects/' + project.id %>">Cancel</a></div>
+</form>
+<%- include('../partials/foot') %>

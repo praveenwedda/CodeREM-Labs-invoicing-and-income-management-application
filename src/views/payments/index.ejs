@@ -1,0 +1,21 @@
+<%- include('../partials/head') %>
+<div class="head"><h1>Payments received</h1></div>
+<form class="toolbar" method="get">
+  <div class="field"><label>From</label><input type="date" name="from" value="<%= from || '' %>"></div>
+  <div class="field"><label>To</label><input type="date" name="to" value="<%= to || '' %>"></div>
+  <button class="btn ghost">Filter</button>
+</form>
+<% if (Object.keys(totals).length) { %><div class="grid g4" style="margin-bottom:18px">
+  <% for (const [c, t] of Object.entries(totals)) { %><div class="stat"><div class="k">Net received (<%= c %>)</div><div class="v"><%= fmtAmount(t) %></div></div><% } %>
+</div><% } %>
+<div class="card flush"><div class="tbl-wrap"><table>
+  <thead><tr><th>Date</th><th>Invoice</th><th>Client</th><th>Method</th><th>Reference</th><th class="num">Amount</th><th>Recorded by</th></tr></thead><tbody>
+  <% if (!payments.length) { %><tr><td colspan="7" class="empty">No payments.</td></tr><% } %>
+  <% for (const p of payments) { %><tr>
+    <td><%= fmtDate(p.payment_date) %></td><td><a href="/invoices/<%= p.invoice_id %>"><%= p.uid %></a></td><td><%= p.client_name %></td>
+    <td><%= p.method %><%- p.reversed_by ? ' <span class="badge b-void">Reversed</span>' : '' %></td><td><%= p.reference || '' %></td>
+    <td class="num <%= p.amount < 0 ? 'neg' : '' %>"><%= fmtMoney(p.amount, p.currency) %></td>
+    <td class="small"><%= p.recorded_by_email %></td>
+  </tr><% } %>
+  </tbody></table></div></div>
+<%- include('../partials/foot') %>

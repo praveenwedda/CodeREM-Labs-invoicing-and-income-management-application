@@ -1,0 +1,44 @@
+<%- include('../partials/head') %>
+<div class="head">
+  <div><div class="crumbs"><a href="/clients">Clients</a></div><h1><%= client.name %></h1><div class="sub">Billing currency: <%= client.currency %></div></div>
+  <div class="actions">
+    <a class="btn ghost" href="/clients/<%= client.id %>/edit">Edit</a>
+    <a class="btn ghost" href="/projects/new?client_id=<%= client.id %>">New project</a>
+    <a class="btn ghost" href="/contracts/new?client_id=<%= client.id %>">New contract</a>
+    <a class="btn" href="/invoices/new?client_id=<%= client.id %>">New invoice</a>
+  </div>
+</div>
+<div class="grid g3" style="margin-bottom:18px">
+  <div class="stat"><div class="k">Invoiced</div><div class="v"><%= fmtMoney(totals.invoiced, client.currency) %></div></div>
+  <div class="stat"><div class="k">Received</div><div class="v"><%= fmtMoney(totals.received, client.currency) %></div></div>
+  <div class="stat accent"><div class="k"><%= totals.balance < 0 ? 'Client credit' : 'Balance due' %></div><div class="v <%= totals.balance > 0 ? 'neg' : '' %>"><%= fmtMoney(Math.abs(totals.balance), client.currency) %></div></div>
+</div>
+<div class="grid g2">
+  <div class="card"><h2>Contact details</h2><dl class="kv">
+    <dt>Contact person</dt><dd><%= client.contact_person || '—' %></dd>
+    <dt>Email</dt><dd><%= client.email || '—' %></dd>
+    <dt>Phone</dt><dd><%= client.phone || '—' %></dd>
+    <dt>Address</dt><dd><%= client.address || '—' %></dd>
+    <dt>Tax ID</dt><dd><%= client.tax_id || '—' %></dd>
+    <% if (client.notes) { %><dt>Notes</dt><dd><%= client.notes %></dd><% } %>
+  </dl></div>
+  <div class="card flush"><h2>Maintenance & support contracts</h2>
+    <% if (!contracts.length) { %><div class="empty">No contracts. <a href="/contracts/new?client_id=<%= client.id %>">Create one</a>.</div><% } else { %>
+    <table><thead><tr><th>Contract</th><th class="num">Monthly</th><th>Next invoice</th></tr></thead><tbody>
+    <% for (const c of contracts) { %><tr><td><a href="/contracts/<%= c.id %>"><%= c.title %></a> <%- include('../partials/status', { s: c.status }) %></td>
+      <td class="num"><%= fmtAmount(c.monthly_amount) %></td><td><%= c.next ? fmtDate(c.next.issueDate) : '—' %></td></tr><% } %>
+    </tbody></table><% } %>
+  </div>
+</div>
+<div class="card flush"><h2>Projects</h2>
+  <% if (!projects.length) { %><div class="empty">No projects yet. <a href="/projects/new?client_id=<%= client.id %>">Create the first project</a>.</div><% } else { %>
+  <div class="tbl-wrap"><table><thead><tr><th>Project</th><th>Status</th><th>Start</th><th class="num">Total</th><th class="num">Invoiced</th><th class="num">Remaining to bill</th></tr></thead><tbody>
+  <% for (const p of projects) { %><tr><td><a href="/projects/<%= p.id %>"><b><%= p.name %></b></a></td><td><%- include('../partials/status', { s: p.status }) %></td>
+    <td><%= fmtDate(p.start_date) %></td><td class="num"><%= fmtAmount(p.total_amount) %></td><td class="num"><%= fmtAmount(p.invoiced) %></td>
+    <td class="num"><%= fmtAmount(p.total_amount - p.invoiced) %></td></tr><% } %>
+  </tbody></table></div><% } %>
+</div>
+<div class="card flush"><h2>Invoices</h2>
+  <%- include('../invoices/_table', { invoices, showClient: false }) %>
+</div>
+<%- include('../partials/foot') %>

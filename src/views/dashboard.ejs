@@ -1,0 +1,67 @@
+<%- include('partials/head') %>
+<div class="head"><div><h1>Dashboard</h1><div class="sub"><%= fmtDate(today) %></div></div>
+  <div class="actions"><a class="btn ghost" href="/clients/new">New client</a><a class="btn" href="/invoices/new">New invoice</a></div></div>
+
+<div class="grid g4" style="margin-bottom:18px">
+  <div class="stat"><div class="k">Clients</div><div class="v"><%= counts.clients %></div></div>
+  <div class="stat"><div class="k">Open projects</div><div class="v"><%= counts.projects %></div></div>
+  <div class="stat"><div class="k">Active contracts</div><div class="v"><%= counts.contracts %></div></div>
+  <div class="stat"><div class="k">Issued invoices</div><div class="v"><%= counts.invoices %></div></div>
+</div>
+
+<% if (!summary.length) { %>
+  <div class="card empty">No financial activity yet. Start by <a href="/clients/new">adding a client</a>.</div>
+<% } %>
+<% for (const s of summary) { %>
+  <h2 style="margin-top:6px"><%= s.currency %></h2>
+  <div class="grid g4" style="margin-bottom:18px">
+    <div class="stat accent"><div class="k">Outstanding receivables</div><div class="v"><%= fmtAmount(s.outstanding) %></div>
+      <div class="small <%= s.overdue ? 'neg' : 'muted' %>"><%= fmtAmount(s.overdue) %> overdue</div></div>
+    <div class="stat"><div class="k">Received this month</div><div class="v"><%= fmtAmount(s.monthIn) %></div></div>
+    <div class="stat"><div class="k">Total invoiced / received</div><div class="v"><%= fmtAmount(s.invoiced) %></div>
+      <div class="small muted"><%= fmtAmount(s.received) %> received<%= s.credit ? ` · ${fmtAmount(s.credit)} client credit` : '' %></div></div>
+    <div class="stat"><div class="k">Cash position (ledger)</div><div class="v <%= s.cashIn - s.cashOut < 0 ? 'neg' : '' %>"><%= fmtAmount(s.cashIn - s.cashOut) %></div>
+      <div class="small muted">in <%= fmtAmount(s.cashIn) %> · out <%= fmtAmount(s.cashOut) %></div></div>
+  </div>
+  <% if (monthly[s.currency]) { const m = monthly[s.currency]; const max = Math.max(1, ...months.map(k => Math.max(m[k].in, m[k].out))); %>
+  <div class="card">
+    <div class="head" style="margin-bottom:4px"><h3 style="margin:0">Cashflow — last 12 months (<%= s.currency %>)</h3><div class="legend"><span class="li">In</span><span class="lo">Out</span></div></div>
+    <div class="bars">
+      <% for (const k of months) { %><div class="col" title="<%= k %>: in <%= fmtAmount(m[k].in) %>, out <%= fmtAmount(m[k].out) %>">
+        <div style="display:flex;gap:2px;align-items:flex-end;height:100%;width:100%;justify-content:center">
+          <div class="bar in" style="height:<%= (m[k].in / max * 100).toFixed(1) %>%"></div>
+          <div class="bar out" style="height:<%= (m[k].out / max * 100).toFixed(1) %>%"></div>
+        </div></div><% } %>
+    </div>
+    <div class="bars-lbl"><% for (const k of months) { %><div><%= fmtDate(k + '-01').slice(3) %></div><% } %></div>
+  </div>
+  <% } %>
+<% } %>
+
+<div class="grid g2">
+  <div class="card flush">
+    <h2>Overdue invoices</h2>
+    <% if (!overdue.length) { %><div class="empty">Nothing overdue.</div><% } else { %>
+    <div class="tbl-wrap"><table><thead><tr><th>Invoice</th><th>Client</th><th>Due</th><th class="num">Balance</th></tr></thead><tbody>
+      <% for (const i of overdue) { %><tr><td><a href="/invoices/<%= i.id %>"><%= i.uid %></a></td><td><%= i.client_name %></td>
+        <td class="neg"><%= fmtDate(i.due_date) %></td><td class="num"><%= fmtMoney(i.balance, i.currency) %></td></tr><% } %>
+    </tbody></table></div><% } %>
+  </div>
+  <div class="card flush">
+    <h2>Scheduled contract invoices — next 30 days</h2>
+    <% if (!upcoming.length) { %><div class="empty">No contract invoices scheduled in the next 30 days.</div><% } else { %>
+    <div class="tbl-wrap"><table><thead><tr><th>Issue date</th><th>Contract</th><th>Client</th><th class="num">Amount</th></tr></thead><tbody>
+      <% for (const c of upcoming) { %><tr><td><%= fmtDate(c.next.issueDate) %></td><td><a href="/contracts/<%= c.id %>"><%= c.title %></a></td>
+        <td><%= c.client_name %></td><td class="num"><%= fmtMoney(c.monthly_amount, c.currency) %></td></tr><% } %>
+    </tbody></table></div><% } %>
+  </div>
+</div>
+
+<div class="card flush">
+  <h2>Recent activity <a class="small" href="/audit" style="font-weight:400;margin-left:8px">Full audit trail →</a></h2>
+  <div class="tbl-wrap"><table><tbody>
+    <% for (const a of activity) { %><tr><td class="small muted" style="width:170px"><%= fmtDateTime(a.ts) %></td><td class="small"><%= a.user_label %></td>
+      <td><span class="mono"><%= a.action %></span></td><td class="small"><%= a.entity ? `${a.entity} ${a.entity_id || ''}` : '' %></td></tr><% } %>
+  </tbody></table></div>
+</div>
+<%- include('partials/foot') %>

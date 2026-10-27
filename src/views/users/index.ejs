@@ -1,0 +1,31 @@
+<%- include('../partials/head') %>
+<div class="head"><div><h1>Administrators</h1><div class="sub">Every administrator has full access. Accounts are deactivated rather than deleted so the audit trail stays intact.</div></div></div>
+<div class="card flush"><div class="tbl-wrap"><table>
+  <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Created</th><th>Last sign-in</th><th></th></tr></thead><tbody>
+  <% for (const u of users) { %><tr>
+    <td><b><%= u.name %></b><%= u.id === user.id ? ' (you)' : '' %></td><td><%= u.email %></td>
+    <td><%- include('../partials/status', { s: u.is_active ? 'active' : 'ended' }) %></td>
+    <td class="small"><%= fmtDate(u.created_at) %><div class="muted"><%= u.created_by_email ? 'by ' + u.created_by_email : 'initial setup' %></div></td>
+    <td class="small"><%= u.last_login_at ? fmtDateTime(u.last_login_at) : 'never' %></td>
+    <td><% if (u.id !== user.id) { %><div class="actions">
+      <form method="post" action="/users/<%= u.id %>/status" <%- u.is_active ? `data-confirm="Deactivate ${u.email}? They will be signed out immediately."` : '' %>><%- include('../partials/csrf') %>
+        <input type="hidden" name="op" value="<%= u.is_active ? 'deactivate' : 'activate' %>"><button class="btn ghost sm"><%= u.is_active ? 'Deactivate' : 'Reactivate' %></button></form>
+      <details class="inline"><summary class="small">Reset password</summary>
+        <form method="post" action="/users/<%= u.id %>/reset-password"><%- include('../partials/csrf') %>
+          <input type="password" name="password" minlength="10" placeholder="New password (10+ chars)" required autocomplete="new-password">
+          <button class="btn sm" style="margin-top:6px">Set password</button></form></details>
+    </div><% } %></td>
+  </tr><% } %>
+  </tbody></table></div></div>
+<form class="card" method="post" action="/users" style="max-width:640px">
+  <%- include('../partials/csrf') %>
+  <h2>Add administrator</h2>
+  <div class="row">
+    <div class="field"><label>Full name</label><input type="text" name="name" required></div>
+    <div class="field"><label>Email</label><input type="email" name="email" required></div>
+  </div>
+  <div class="field"><label>Initial password</label><input type="password" name="password" minlength="10" required autocomplete="new-password">
+    <div class="hint">At least 10 characters. Share it securely; they can change it under “My account”.</div></div>
+  <button class="btn">Create administrator</button>
+</form>
+<%- include('../partials/foot') %>

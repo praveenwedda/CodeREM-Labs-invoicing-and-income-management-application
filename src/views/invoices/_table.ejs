@@ -1,0 +1,13 @@
+<% if (!invoices.length) { %><div class="empty">No invoices.</div><% } else { %>
+<div class="tbl-wrap"><table><thead><tr><th>Invoice</th><% if (showClient) { %><th>Client</th><% } %><th>Issued</th><th>Due</th><th>Status</th>
+  <th class="num">Total</th><th class="num">Paid</th><th class="num">Balance</th><th></th></tr></thead><tbody>
+<% for (const i of invoices) { %><tr>
+  <td><a href="/invoices/<%= i.id %>"><b><%= i.uid %></b></a><% if (i.contract_id) { %><div class="small muted">Contract</div><% } %></td>
+  <% if (showClient) { %><td><%= i.client_name %></td><% } %>
+  <td><%= fmtDate(i.issue_date) %></td><td><%= fmtDate(i.due_date) %></td>
+  <td><%- include('../partials/status', { s: i.computed_status }) %></td>
+  <td class="num"><%= fmtMoney(i.total, i.currency) %></td><td class="num"><%= fmtAmount(i.paid) %></td>
+  <td class="num <%= i.status === 'issued' && i.balance > 0 ? 'neg' : i.balance < 0 ? 'pos' : '' %>"><%= i.status === 'void' ? '—' : fmtAmount(i.balance) %></td>
+  <td><a class="btn ghost sm" href="/invoices/<%= i.id %>/pdf">PDF</a></td>
+</tr><% } %>
+</tbody></table></div><% } %>

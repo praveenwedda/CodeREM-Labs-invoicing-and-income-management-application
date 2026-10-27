@@ -1,0 +1,12 @@
+<%- include('../partials/head') %>
+<div class="head"><h1>Invoices</h1><a class="btn" href="/invoices/new">New invoice</a></div>
+<form class="toolbar" method="get">
+  <input type="text" name="q" value="<%= q || '' %>" placeholder="Invoice UID or client">
+  <select name="client_id"><option value="">All clients</option><% for (const c of clients) { %><option value="<%= c.id %>" <%= c.id === clientId ? 'selected' : '' %>><%= c.name %></option><% } %></select>
+  <select name="status"><option value="">Any status</option>
+    <% for (const [k, v] of [['open','Open (balance due)'],['unpaid','Unpaid'],['partial','Partially paid'],['overdue','Overdue'],['paid','Paid'],['overpaid','Overpaid'],['void','Void']]) { %>
+      <option value="<%= k %>" <%= status === k ? 'selected' : '' %>><%= v %></option><% } %></select>
+  <button class="btn ghost">Filter</button>
+</form>
+<div class="card flush"><%- include('_table', { invoices, showClient: true }) %></div>
+<%- include('../partials/foot') %>

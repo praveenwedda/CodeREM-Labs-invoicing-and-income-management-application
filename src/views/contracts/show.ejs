@@ -1,0 +1,48 @@
+<%- include('../partials/head') %>
+<div class="head">
+  <div><div class="crumbs"><a href="/contracts">Contracts</a> / <a href="/clients/<%= contract.client_id %>"><%= contract.client_name %></a></div>
+    <h1><%= contract.title %> <%- include('../partials/status', { s: contract.status }) %></h1>
+    <div class="sub"><%= fmtMoney(contract.monthly_amount, contract.currency) %> per month</div></div>
+  <div class="actions">
+    <% if (contract.status !== 'ended') { %>
+      <a class="btn ghost" href="/contracts/<%= contract.id %>/edit">Edit</a>
+      <% if (next) { %><form method="post" action="/contracts/<%= contract.id %>/issue" data-confirm="Issue the invoice for <%= fmtDate(next.start) %> – <%= fmtDate(next.end) %> now?">
+        <%- include('../partials/csrf') %><button class="btn">Issue next invoice now</button></form><% } %>
+    <% } %>
+  </div>
+</div>
+<div class="grid g2">
+  <div class="card"><h2>Terms</h2><dl class="kv">
+    <dt>Client</dt><dd><a href="/clients/<%= contract.client_id %>"><%= contract.client_name %></a></dd>
+    <% if (contract.project_name) { %><dt>Project</dt><dd><a href="/projects/<%= contract.project_id %>"><%= contract.project_name %></a></dd><% } %>
+    <dt>Monthly amount</dt><dd><%= fmtMoney(contract.monthly_amount, contract.currency) %></dd>
+    <dt>Service period</dt><dd><%= fmtDate(contract.start_date) %> → <%= contract.end_date ? fmtDate(contract.end_date) : 'ongoing' %></dd>
+    <dt>Invoice day</dt><dd>Day <%= contract.invoice_day %> of each month</dd>
+    <dt>Payment terms</dt><dd><%= contract.payment_terms %> days</dd>
+    <dt>Months invoiced</dt><dd><%= contract.periods_issued %></dd>
+    <% if (contract.description) { %><dt>Scope</dt><dd><%= contract.description %></dd><% } %>
+  </dl></div>
+  <div class="card"><h2>Schedule</h2>
+    <% if (contract.status === 'ended') { %><p class="muted">This contract has ended. No further invoices will be issued.</p>
+    <% } else if (!next) { %><p class="muted">All periods have been invoiced.</p>
+    <% } else { %>
+      <dl class="kv"><dt>Next period</dt><dd><%= fmtDate(next.start) %> – <%= fmtDate(next.end) %></dd>
+        <dt>Scheduled issue</dt><dd><b><%= fmtDate(next.issueDate) %></b><%= contract.status === 'paused' ? ' (paused — will not be issued)' : '' %></dd></dl>
+    <% } %>
+    <% if (contract.status !== 'ended') { %>
+    <div class="actions" style="margin-top:16px">
+      <% if (contract.status === 'active') { %>
+        <form method="post" action="/contracts/<%= contract.id %>/status"><%- include('../partials/csrf') %><input type="hidden" name="op" value="pause"><button class="btn ghost sm">Pause invoicing</button></form>
+      <% } else { %>
+        <form method="post" action="/contracts/<%= contract.id %>/status"><%- include('../partials/csrf') %><input type="hidden" name="op" value="resume">
+          <label class="check small" style="font-weight:400"><input type="checkbox" name="bill_missed"> Also bill months missed while paused</label>
+          <button class="btn sm">Resume invoicing</button></form>
+      <% } %>
+      <form method="post" action="/contracts/<%= contract.id %>/status" data-confirm="End this contract? No further invoices will be issued and this cannot be undone."><%- include('../partials/csrf') %><input type="hidden" name="op" value="end"><button class="btn ghost sm neg">End contract</button></form>
+    </div><% } %>
+  </div>
+</div>
+<div class="card flush"><h2>Invoices issued under this contract</h2>
+  <%- include('../invoices/_table', { invoices, showClient: false }) %>
+</div>
+<%- include('../partials/foot') %>

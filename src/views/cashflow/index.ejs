@@ -1,0 +1,52 @@
+<%- include('../partials/head') %>
+<div class="head"><div><h1>Cashflow ledger</h1><div class="sub">Every inflow and outflow. Invoice payments are posted automatically. Entries are permanent — mistakes are corrected with a reversing entry.</div></div>
+  <a class="btn ghost" href="/cashflow/export.csv?<%= new URLSearchParams(Object.entries(filters).filter(([, v]) => v)).toString() %>">Export CSV</a></div>
+<form class="toolbar" method="get">
+  <div class="field"><label>Currency</label><select name="currency"><option value="">All</option><% for (const c of CURRENCIES) { %><option <%= filters.currency === c ? 'selected' : '' %>><%= c %></option><% } %></select></div>
+  <div class="field"><label>From</label><input type="date" name="from" value="<%= filters.from || '' %>"></div>
+  <div class="field"><label>To</label><input type="date" name="to" value="<%= filters.to || '' %>"></div>
+  <button class="btn ghost">Filter</button>
+</form>
+<% for (const [c, t] of Object.entries(totals)) { %>
+<div class="grid g4" style="margin-bottom:18px">
+  <div class="stat"><div class="k">Opening balance (<%= c %>)</div><div class="v"><%= fmtAmount(t.opening) %></div></div>
+  <div class="stat"><div class="k">Inflows</div><div class="v pos"><%= fmtAmount(t.in) %></div></div>
+  <div class="stat"><div class="k">Outflows</div><div class="v neg"><%= fmtAmount(t.out) %></div></div>
+  <div class="stat accent"><div class="k">Closing balance</div><div class="v"><%= fmtAmount(t.closing) %></div></div>
+</div><% } %>
+
+<details class="card" <%= entries.length ? '' : 'open' %>>
+  <summary style="cursor:pointer;font-weight:600">Record a manual cash entry (expense or other income)</summary>
+  <div class="grid g2" style="margin-top:14px">
+  <% for (const [dir, cats, label] of [['out', CATEGORIES_OUT, 'Record outflow'], ['in', CATEGORIES_IN, 'Record other inflow']]) { %>
+    <form method="post" action="/cashflow"><%- include('../partials/csrf') %><input type="hidden" name="direction" value="<%= dir %>">
+      <h3><%= dir === 'out' ? 'Money out' : 'Money in (not an invoice payment)' %></h3>
+      <div class="row">
+        <div class="field"><label>Date</label><input type="date" name="entry_date" value="<%= today %>" required></div>
+        <div class="field"><label>Currency</label><select name="currency"><% for (const c of CURRENCIES) { %><option <%= c === company.default_currency ? 'selected' : '' %>><%= c %></option><% } %></select></div>
+        <div class="field"><label>Amount</label><input type="text" name="amount" inputmode="decimal" required></div>
+      </div>
+      <div class="field"><label>Category</label><select name="category"><% for (const c of cats) { %><option><%= c %></option><% } %></select></div>
+      <div class="field"><label>Description</label><input type="text" name="description" required></div>
+      <button class="btn <%= dir === 'out' ? 'red' : '' %>"><%= label %></button>
+    </form>
+  <% } %>
+  </div>
+</details>
+
+<div class="card flush"><div class="tbl-wrap"><table>
+  <thead><tr><th>#</th><th>Date</th><th>Category</th><th>Description</th><th class="num">In</th><th class="num">Out</th><th class="num">Balance</th><th>By</th><th></th></tr></thead><tbody>
+  <% if (!entries.length) { %><tr><td colspan="9" class="empty">No ledger entries.</td></tr><% } %>
+  <% for (const e of entries) { %><tr>
+    <td class="small muted"><%= e.id %></td><td><%= fmtDate(e.entry_date) %></td><td><%= e.category %></td>
+    <td><%= e.description %><%- e.reversed_by ? ' <span class="badge b-void">Reversed</span>' : '' %></td>
+    <td class="num pos"><%= e.direction === 'in' ? fmtMoney(e.amount, e.currency) : '' %></td>
+    <td class="num neg"><%= e.direction === 'out' ? fmtMoney(e.amount, e.currency) : '' %></td>
+    <td class="num"><%= fmtAmount(e.balance) %></td>
+    <td class="small"><%= e.recorded_by_email || 'system' %></td>
+    <td><% if (!e.payment_id && !e.reverses_id && !e.reversed_by) { %><details class="inline"><summary class="small">Reverse</summary>
+      <form method="post" action="/cashflow/<%= e.id %>/reverse"><%- include('../partials/csrf') %>
+        <input type="text" name="reason" placeholder="Reason" required><button class="btn sm red" style="margin-top:6px">Reverse</button></form></details><% } %></td>
+  </tr><% } %>
+  </tbody></table></div></div>
+<%- include('../partials/foot') %>

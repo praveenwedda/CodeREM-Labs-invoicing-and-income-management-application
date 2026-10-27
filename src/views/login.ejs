@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · CodeREM Labs</title><link rel="stylesheet" href="/static/css/app.css"></head>
+<body><div class="auth"><div class="card">
+  <div class="brand"><b><%= company.company_name %></b><i><%= company.company_tagline %></i></div>
+  <h2>Income management — sign in</h2>
+  <% for (const f of flash) { %><div class="flash <%= f.type %>"><%= f.text %></div><% } %>
+  <% if (error) { %><div class="flash error"><%= error %></div><% } %>
+  <form method="post" action="/login">
+    <%- include('partials/csrf') %>
+    <div class="field"><label>Email</label><input type="email" name="email" value="<%= email %>" required autofocus autocomplete="username"></div>
+    <div class="field"><label>Password</label><input type="password" name="password" required autocomplete="current-password"></div>
+    <button class="btn" style="width:100%;justify-content:center">Sign in</button>
+  </form>
+</div></div></body></html>

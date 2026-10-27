@@ -1,0 +1,17 @@
+<%- include('../partials/head') %>
+<div class="head"><div><h1>Maintenance & support contracts</h1><div class="sub">Recurring monthly invoices are issued automatically on each contract's invoice day.</div></div>
+  <a class="btn" href="/contracts/new">New contract</a></div>
+<div class="card flush"><div class="tbl-wrap"><table>
+  <thead><tr><th>Contract</th><th>Client</th><th>Status</th><th class="num">Monthly</th><th>Service period</th><th>Invoiced</th><th>Next invoice</th></tr></thead><tbody>
+  <% if (!contracts.length) { %><tr><td colspan="7" class="empty">No contracts yet.</td></tr><% } %>
+  <% for (const c of contracts) { %><tr>
+    <td><a href="/contracts/<%= c.id %>"><b><%= c.title %></b></a><% if (c.project_name) { %><div class="small muted"><%= c.project_name %></div><% } %></td>
+    <td><a href="/clients/<%= c.client_id %>"><%= c.client_name %></a></td>
+    <td><%- include('../partials/status', { s: c.status }) %></td>
+    <td class="num"><%= fmtMoney(c.monthly_amount, c.currency) %></td>
+    <td class="small"><%= fmtDate(c.start_date) %> → <%= c.end_date ? fmtDate(c.end_date) : 'ongoing' %></td>
+    <td><%= c.periods_issued %> month<%= c.periods_issued === 1 ? '' : 's' %></td>
+    <td><%= c.next ? fmtDate(c.next.issueDate) : '—' %></td>
+  </tr><% } %>
+  </tbody></table></div></div>
+<%- include('../partials/foot') %>

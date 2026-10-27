@@ -1,0 +1,33 @@
+{
+  "name": "coderem-income-manager",
+  "version": "1.0.0",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/praveenwedda/CodeREM-Labs-invoicing-and-income-management-application.git"
+  },
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/praveenwedda/CodeREM-Labs-invoicing-and-income-management-application/issues"
+  },
+  "homepage": "https://github.com/praveenwedda/CodeREM-Labs-invoicing-and-income-management-application#readme",
+  "description": "Income, invoicing and cashflow management for CodeREM Labs Pvt. Ltd.",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "ejs": "^7.0.2",
+    "express": "^4.22.3",
+    "express-session": "^1.19.0",
+    "helmet": "^8.3.0",
+    "pdfkit": "^0.20.2"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  }
+}

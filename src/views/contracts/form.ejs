@@ -1,0 +1,39 @@
+<%- include('../partials/head') %>
+<div class="head"><div><div class="crumbs"><a href="/contracts">Contracts</a></div><h1><%= title %></h1></div></div>
+<% if (isNew && !clients.length) { %><div class="card empty">Create a <a href="/clients/new">client</a> first.</div><% } else { %>
+<form class="card" method="post" action="/contracts<%= isNew ? '' : '/' + contract.id %>" style="max-width:820px">
+  <%- include('../partials/csrf') %>
+  <div class="row">
+    <div class="field"><label>Client *</label>
+      <% if (isNew) { %><select name="client_id" data-nav required><option value="">Select client…</option>
+        <% for (const c of clients) { %><option value="<%= c.id %>" <%= c.id === contract.client_id ? 'selected' : '' %>><%= c.name %> (<%= c.currency %>)</option><% } %></select>
+      <% } else { %><input type="text" value="<%= contract.client_name %>" disabled><% } %>
+    </div>
+    <div class="field"><label>Related project (optional)</label>
+      <select name="project_id"><option value="">— None —</option>
+        <% for (const p of projects) { %><option value="<%= p.id %>" <%= p.id === contract.project_id ? 'selected' : '' %>><%= p.name %></option><% } %></select>
+      <% if (isNew && !contract.client_id) { %><div class="hint">Select a client to list their projects.</div><% } %>
+    </div>
+  </div>
+  <div class="field"><label>Contract title *</label><input type="text" name="title" value="<%= contract.title || '' %>" placeholder="e.g. Monthly maintenance & support" required>
+    <div class="hint">Appears on each invoice line, followed by the service period.</div></div>
+  <div class="field"><label>Description / service scope</label><textarea name="description"><%= contract.description || '' %></textarea></div>
+  <div class="row">
+    <div class="field"><label>Amount per month *</label><input type="text" name="monthly_amount" inputmode="decimal" value="<%= toInput(contract.monthly_amount) %>" required></div>
+    <div class="field"><label>Service start date *</label><input type="date" name="start_date" value="<%= contract.start_date || '' %>" <%= !isNew && contract.periods_issued > 0 ? 'disabled' : '' %> required>
+      <% if (!isNew && contract.periods_issued > 0) { %><input type="hidden" name="start_date" value="<%= contract.start_date %>"><div class="hint">Locked once invoicing has started.</div><% } %></div>
+    <div class="field"><label>End date</label><input type="date" name="end_date" value="<%= contract.end_date || '' %>"><div class="hint">Leave empty for an ongoing contract.</div></div>
+  </div>
+  <div class="row">
+    <div class="field"><label>Invoice day of month *</label><input type="number" name="invoice_day" min="1" max="28" value="<%= contract.invoice_day %>" required>
+      <div class="hint">Each month's invoice is issued automatically on this day of the period's month (1–28).</div></div>
+    <div class="field"><label>Payment terms (days) *</label><input type="number" name="payment_terms" min="0" max="365" value="<%= contract.payment_terms %>" required></div>
+  </div>
+  <% if (isNew) { %>
+  <div class="field"><label class="check"><input type="checkbox" name="issue_now"> <span>Issue the first month's invoice right away (dated today)
+    <span class="hint" style="display:block">Otherwise the first invoice is issued on the scheduled invoice day. If the start date is in the past, invoices for past periods are issued immediately.</span></span></label></div>
+  <% } %>
+  <div class="actions"><button class="btn"><%= isNew ? 'Create contract' : 'Save changes' %></button><a class="btn ghost" href="<%= isNew ? '/contracts' : '/contracts/' + contract.id %>">Cancel</a></div>
+</form>
+<% } %>
+<%- include('../partials/foot') %>

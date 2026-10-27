@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> · CodeREM Labs</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script src="/static/js/app.js" defer></script>
+</head>
+<body>
+<% const nav = (href, label) => { const on = href === '/' ? path === '/' : path.startsWith(href); return `<a href="${href}" class="${on ? 'on' : ''}">${label}</a>`; }; %>
+<div class="shell">
+  <aside class="side">
+    <div class="brand"><b>CodeREM<span>.</span>Labs</b><i><%= company.company_tagline %></i></div>
+    <nav>
+      <%- nav('/', 'Dashboard') %>
+      <div class="sect">Billing</div>
+      <%- nav('/clients', 'Clients') %>
+      <%- nav('/contracts', 'Contracts') %>
+      <%- nav('/invoices', 'Invoices') %>
+      <%- nav('/payments', 'Payments') %>
+      <%- nav('/cashflow', 'Cashflow') %>
+      <div class="sect">Administration</div>
+      <%- nav('/audit', 'Audit trail') %>
+      <%- nav('/users', 'Administrators') %>
+      <%- nav('/settings', 'Settings') %>
+    </nav>
+    <div class="me">
+      <div style="color:#fff"><%= user.name %></div>
+      <div class="muted" style="color:#8fa0bb"><%= user.email %></div>
+      <div style="margin-top:6px"><a href="/users/me" style="color:#8fa0bb">My account</a> ·
+        <form method="post" action="/logout" style="display:inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button>Sign out</button></form></div>
+    </div>
+  </aside>
+  <main>
+    <% for (const f of flash) { %><div class="flash <%= f.type %>"><%= f.text %></div><% } %>
